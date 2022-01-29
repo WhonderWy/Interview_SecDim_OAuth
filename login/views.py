@@ -68,13 +68,13 @@ class LoginAction(views.APIView):
                 result = ""
                 parameters = {
                     "client_id": os.getenv("SECRET_CLIENT_ID_FOR_NOW"),
-                    "redirect_uri": "continue/",
+                    "redirect_uri": "http://localhost:8000/continue/",
                     # "login": "",
                     "scope": "user",
                     "state": state,
                 }
                 get_response = session.get(AUTHORISE_URL, params=parameters)
-                return HttpResponse(get_response)
+                return HttpResponse(get_response.url)
             else:
                 email: str = request.data["email"]
                 password: str = request.data["hashed"]

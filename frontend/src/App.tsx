@@ -15,13 +15,31 @@ import {
   MDBBtn,
   MDBRow,
   MDBCol,
+  MDBCard,
+  MDBCardBody,
+  MDBCardImage,
+  MDBCardText,
+  MDBCardTitle,
 } from "mdb-react-ui-kit";
 import axios from "axios";
 import bcrypt from "bcryptjs";
+import parse from 'html-react-parser';
+import { useNavigate } from "react-router";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 const saltAndPepper = bcrypt.genSaltSync(10);
 const logInEndpoint = "login/";
 const signUpEndpoint = "signup/";
+
+let page = "<></>"
+
+const RenderAuth = () => {
+  if (page) {
+    return <>parse(page)</>;
+  } else {
+    return <><div></div></>;
+  }
+}
 
 function App() {
   const [simpleLoggedIn, setLoggedIn] = useState(false);
@@ -50,6 +68,10 @@ function App() {
     let response;
     try {
       response = await axios.post(logInEndpoint, { oauth: "yes" });
+      if (response.status === 200) {
+        page = response.data;
+        window.location.href = page;
+      }
       if (response.status === 200 && response.data.pointlessToken.size > 0) {
         localStorage.setItem("pointlessToken", response.data.pointlessToken);
         localStorage.setItem("email", response.data);
@@ -191,6 +213,11 @@ function App() {
               </MDBCol>
             </MDBRow>
           )}
+          <MDBRow>
+            <MDBCol>
+              <RenderAuth />
+            </MDBCol>
+          </MDBRow>
           {/* Nicked the above form from https://mdbootstrap.com/docs/react/forms/basic/ */}
         </MDBContainer>
       </div>
