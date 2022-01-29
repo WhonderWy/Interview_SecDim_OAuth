@@ -19,6 +19,7 @@ from ..login import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', views.LoginAction.as_view()),
+    path('login/', views.LoginAction.as_view()),
+    path('signup/', views.LoginAction.as_view()),
     path('in/', views.LoggedIn.as_view()),
 ]
