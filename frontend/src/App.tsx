@@ -29,8 +29,8 @@ function App() {
   const passwordRef = useRef("");
 
   const doLogIn = async () => {
-    const email = emailRef.current.value;
-    const password = passwordRef.current.value;
+    const email = emailRef.current;
+    const password = passwordRef.current;
     const hashed = bcrypt.hashSync(password, saltAndPepper);
 
     let response;
@@ -46,9 +46,23 @@ function App() {
     }
   };
 
+  const doOAuth = async () => {
+    let response;
+    try {
+      response = await axios.post(logInEndpoint, { oauth: "yes" });
+      if (response.status === 200 && response.data.pointlessToken.size > 0) {
+        localStorage.setItem("pointlessToken", response.data.pointlessToken);
+        localStorage.setItem("email", response.data);
+      }
+    } catch (error) {
+      console.log(error);
+      localStorage.clear();
+    }
+  }
+
   const doSignUp = async () => {
-    const email = emailRef.current.value;
-    const password = passwordRef.current.value;
+    const email = emailRef.current;
+    const password = passwordRef.current;
     const hashed = bcrypt.hashSync(password, saltAndPepper);
 
     let response;
@@ -148,6 +162,14 @@ function App() {
                     />
                   </div>
                   <div className="text-center">
+                    <MDBBtn
+                      onClick={(e: { preventDefault: () => void; }) => {
+                        e.preventDefault();
+                        doOAuth();
+                      }}
+                    >
+                      Login with GitHub
+                    </MDBBtn>
                     <MDBBtn
                       onClick={(e: { preventDefault: () => void; }) => {
                         e.preventDefault();
