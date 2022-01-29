@@ -1,5 +1,11 @@
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
+from django.http import (
+    HttpResponse,
+    JsonResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    HttpResponsePermanentRedirect,
+)
 from django.contrib.auth import login
 from django.contrib import messages
 from rest_framework import views
@@ -20,6 +26,7 @@ USER_API_URL = "https://api.github.com/user/"
 session = requests.session()
 state: str = secrets.token_urlsafe()
 
+
 def handle_oauth() -> str:
     dotenv.read_dotenv()
     result = ""
@@ -31,7 +38,11 @@ def handle_oauth() -> str:
         "state": state,
     }
     get_response = session.get(AUTHORISE_URL, params=parameters)
-    if get_response.ok and get_response.json()["state"] == state and get_response.json()["code"]:
+    if (
+        get_response.ok
+        and get_response.json()["state"] == state
+        and get_response.json()["code"]
+    ):
         github_code: str = get_response.json()["code"]
         post_body = {
             "client_id": os.getenv("SECRET_CLIENT_ID_FOR_NOW"),
@@ -51,12 +62,13 @@ def handle_oauth() -> str:
                 result = email_response.json()["email"]
     return result
 
+
 # Create your views here.
 class LoginAction(views.APIView):
     @classmethod
     def get_extra_actions(cls):
         return []
-    
+
     def get(self, request):
         return HttpResponse("Test")
 
@@ -74,7 +86,17 @@ class LoginAction(views.APIView):
                     "state": state,
                 }
                 get_response = session.get(AUTHORISE_URL, params=parameters)
-                return HttpResponse(get_response.url)
+                response = HttpResponsePermanentRedirect(get_response.url)
+                # response["Access-Control-Allow-Origin"] = "*"
+                # response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+                # response["Access-Control-Max-Age"] = "1000"
+                # response["Access-Control-Allow-Headers"] = "X-Requested-With, Content-Type"
+                # response["Access-Control-Allow-Origin"] = "github.com"
+                # response["Access-Control-Allow-Methods"] = "GET"
+                # response["Access-Control-Allow-Headers"] = "github.com"
+                # response["redirect"] = "follow"
+                # response["Referrer-Policy"] = "origin"
+                return response
             else:
                 email: str = request.data["email"]
                 password: str = request.data["hashed"]
@@ -82,11 +104,12 @@ class LoginAction(views.APIView):
         except:
             return HttpResponseBadRequest("Did something wrong.")
 
+
 class Continue(views.APIView):
     @classmethod
     def get_extra_actions(cls):
         return []
-    
+
     def get(self, request):
         return HttpResponse("Test")
 
@@ -99,7 +122,7 @@ class Continue(views.APIView):
                     "client_id": os.getenv("SECRET_CLIENT_ID_FOR_NOW"),
                     "client_secret": os.getenv("SECRET_CLIENT_SECRET"),
                     "code": github_code,
-                    "redirect_uri": "/",
+                    "redirect_uri": "http://localhost:8000/continue/",
                 }
                 post_response = session.post(ACCESS_TOKEN_URL, data=post_body)
                 access_token = post_response.json()["access_token"]
@@ -115,11 +138,12 @@ class Continue(views.APIView):
         except:
             return HttpResponseBadRequest("Did something wrong.")
 
+
 class LoggedIn(views.APIView):
     @classmethod
     def get_extra_actions(cls):
         return []
-    
+
     def get(self, request):
         return HttpResponse("Test")
 
@@ -135,15 +159,16 @@ class LoggedIn(views.APIView):
                 email_response = session.get(USER_API_URL, headers=header)
                 if email_response.ok and email_response.json()["email"]:
                     result = email_response.json()["email"]
-            return JsonResponse({"result": result})
+            return JsonResponse({"email": result})
         except:
             return HttpResponseBadRequest("Did something wrong.")
+
 
 class SignUp(views.APIView):
     @classmethod
     def get_extra_actions(cls):
         return []
-    
+
     def get(self, request):
         return HttpResponse("Test")
 
@@ -158,4 +183,6 @@ class SignUp(views.APIView):
 
 # Create your views here.
 def index(request):
-    return HttpResponse("Hello, world. You shouldn't be looking here. If you are, I did not build this site.")
+    return HttpResponse(
+        "Hello, world. You shouldn't be looking here. If you are, I did not build this site."
+    )

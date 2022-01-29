@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import "./App.css";
 import {
   MDBNavbar,
@@ -8,34 +8,25 @@ import {
   MDBNavbarToggler,
   MDBContainer,
   MDBIcon,
-  MDBInputGroup,
   MDBInput,
-  MDBInputGroupText,
-  MDBCheckbox,
   MDBBtn,
   MDBRow,
   MDBCol,
-  MDBCard,
-  MDBCardBody,
-  MDBCardImage,
-  MDBCardText,
-  MDBCardTitle,
 } from "mdb-react-ui-kit";
 import axios from "axios";
 import bcrypt from "bcryptjs";
-import parse from 'html-react-parser';
-import { useNavigate } from "react-router";
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import parse from "html-react-parser";
 
 const saltAndPepper = bcrypt.genSaltSync(10);
 const logInEndpoint = "login/";
 const signUpEndpoint = "signup/";
+const inEndpoint = "in/"
 
 let page = "<></>"
 
 const RenderAuth = () => {
   if (page) {
-    return <>parse(page)</>;
+    return <>{parse(page)}</>;
   } else {
     return <><div></div></>;
   }
@@ -68,13 +59,12 @@ function App() {
     let response;
     try {
       response = await axios.post(logInEndpoint, { oauth: "yes" });
-      if (response.status === 200) {
-        page = response.data;
-        window.location.href = page;
-      }
       if (response.status === 200 && response.data.pointlessToken.size > 0) {
         localStorage.setItem("pointlessToken", response.data.pointlessToken);
-        localStorage.setItem("email", response.data);
+        response = await axios.post(inEndpoint, {"access_token": response.data.pointlessToken})
+        if (response.status === 200 ) {
+          localStorage.setItem("email", response.data.email);
+        }
       }
     } catch (error) {
       console.log(error);

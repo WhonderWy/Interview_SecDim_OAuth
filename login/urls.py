@@ -1,4 +1,5 @@
 from django.urls import path, include
+
 """oauth URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
@@ -25,9 +26,9 @@ from .views import LoginAction, Continue, SignUp, LoggedIn, index
 # ]
 
 urlpatterns = [
-    path('', index, name='index'),
-    path('login/', LoginAction.as_view()),
-    path('continue/', Continue.as_view()),
-    path('signup/', SignUp.as_view()),
-    path('in/', LoggedIn.as_view()),
+    path("", index, name="index"),
+    path("login/", LoginAction.as_view()),
+    path("continue/", Continue.as_view()),
+    path("signup/", SignUp.as_view()),
+    path("in/", LoggedIn.as_view()),
 ]
