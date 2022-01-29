@@ -2,7 +2,52 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from rest_framework import views
 import authlib
-from .logic import handle_oauth
+import secrets
+import os
+import secrets
+import requests
+import dotenv
+import jwt
+from .models import LoggedInUser
+from .serialisers import LoginSerialiser
+
+AUTHORISE_URL = "https://github.com/login/oauth/authorize"
+ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token"
+USER_API_URL = "https://api.github.com/user/"
+
+session = requests.session()
+state: str = secrets.token_urlsafe()
+
+def handle_oauth() -> str:
+    dotenv.read_dotenv()
+    result = ""
+    parameters = {
+        "client_id": os.getenv("SECRET_CLIENT_ID_FOR_NOW"),
+        "redirect_uri": "continue/",
+        # "login": "",
+        "scope": "user",
+        "state": state,
+    }
+    get_response = session.get(AUTHORISE_URL, params=parameters)
+    if get_response.ok and get_response.json()["state"] == state and get_response.json()["code"]:
+        github_code: str = get_response.json()["code"]
+        post_body = {
+            "client_id": os.getenv("SECRET_CLIENT_ID_FOR_NOW"),
+            "client_secret": os.getenv("SECRET_CLIENT_SECRET"),
+            "code": github_code,
+            "redirect_uri": "/",
+        }
+        post_response = session.post(ACCESS_TOKEN_URL, data=post_body)
+        if post_response.ok and post_response.json()["access_token"]:
+            access_token: str = post_response.json()["access_token"]
+            header = {
+                "Authorization": "token " + access_token,
+                "Accept": "application/vnd.github.v3+json",
+            }
+            email_response = session.get(USER_API_URL, headers=header)
+            if email_response.ok and email_response.json()["email"]:
+                result = email_response.json()["email"]
+    return result
 
 # Create your views here.
 class LoginAction(views.APIView):
@@ -14,14 +59,57 @@ class LoginAction(views.APIView):
         return HttpResponse("Test")
 
     def post(self, request):
-        result: str = ""
+        result = ""
         try:
             if request.data["oauth"]:
-                result = handle_oauth()
+                dotenv.read_dotenv()
+                result = ""
+                parameters = {
+                    "client_id": os.getenv("SECRET_CLIENT_ID_FOR_NOW"),
+                    "redirect_uri": "continue/",
+                    # "login": "",
+                    "scope": "user",
+                    "state": state,
+                }
+                get_response = session.get(AUTHORISE_URL, params=parameters)
+                return HttpResponse(get_response)
             else:
                 email: str = request.data["email"]
-                password: str = request.data["password"]
-            return JsonResponse({"result": result})
+                password: str = request.data["hashed"]
+            return JsonResponse({"pointlessToken": result})
+        except:
+            return HttpResponseBadRequest("Did something wrong.")
+
+class Continue(views.APIView):
+    @classmethod
+    def get_extra_actions(cls):
+        return []
+    
+    def get(self, request):
+        return HttpResponse("Test")
+
+    def post(self, request):
+        result = "no"
+        try:
+            if request.data["state"] == state and request.data["code"]:
+                github_code: str = request.data["code"]
+                post_body = {
+                    "client_id": os.getenv("SECRET_CLIENT_ID_FOR_NOW"),
+                    "client_secret": os.getenv("SECRET_CLIENT_SECRET"),
+                    "code": github_code,
+                    "redirect_uri": "/",
+                }
+                post_response = session.post(ACCESS_TOKEN_URL, data=post_body)
+                access_token = post_response.json()["access_token"]
+                header = {
+                    "Authorization": "token " + access_token,
+                    "Accept": "application/vnd.github.v3+json",
+                }
+                email_response = session.get(USER_API_URL, headers=header)
+                if email_response.ok and email_response.json()["email"]:
+                    result = email_response.json()["email"]
+                result = post_response.json()["access_token"]
+            return JsonResponse({"pointlessToken": result})
         except:
             return HttpResponseBadRequest("Did something wrong.")
 
@@ -34,9 +122,34 @@ class LoggedIn(views.APIView):
         return HttpResponse("Test")
 
     def post(self, request):
+        result = "no"
         try:
-            
-            return JsonResponse({"result": str(result)})
+            if request.data["access_token"]:
+                access_token: str = request.data["access_token"]
+                header = {
+                    "Authorization": "token " + access_token,
+                    "Accept": "application/vnd.github.v3+json",
+                }
+                email_response = session.get(USER_API_URL, headers=header)
+                if email_response.ok and email_response.json()["email"]:
+                    result = email_response.json()["email"]
+            return JsonResponse({"result": result})
+        except:
+            return HttpResponseBadRequest("Did something wrong.")
+
+class SignUp(views.APIView):
+    @classmethod
+    def get_extra_actions(cls):
+        return []
+    
+    def get(self, request):
+        return HttpResponse("Test")
+
+    def post(self, request):
+        try:
+            serializer_class = LoginSerialiser
+            queryset = LoggedInUser.objects.all()
+            return JsonResponse({"result": "ok"})
         except:
             return HttpResponseBadRequest("Did something wrong.")
 
