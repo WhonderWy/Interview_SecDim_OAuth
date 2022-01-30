@@ -16,6 +16,7 @@ import {
 import axios from "axios";
 import bcrypt from "bcryptjs";
 import parse from "html-react-parser";
+import { useNavigate } from "react-router";
 
 const saltAndPepper = bcrypt.genSaltSync(10);
 const logInEndpoint = "login/";
@@ -36,6 +37,7 @@ function App() {
   const [simpleLoggedIn, setLoggedIn] = useState(false);
   const emailRef = useRef("");
   const passwordRef = useRef("");
+  // const navTo = useNavigate();
 
   const doLogIn = async () => {
     const email = emailRef.current;
@@ -55,21 +57,9 @@ function App() {
     }
   };
 
-  const doOAuth = async () => {
-    let response;
-    try {
-      response = await axios.post(logInEndpoint, { oauth: "yes" });
-      if (response.status === 200 && response.data.pointlessToken.size > 0) {
-        localStorage.setItem("pointlessToken", response.data.pointlessToken);
-        response = await axios.post(inEndpoint, {"access_token": response.data.pointlessToken})
-        if (response.status === 200 ) {
-          localStorage.setItem("email", response.data.email);
-        }
-      }
-    } catch (error) {
-      console.log(error);
-      localStorage.clear();
-    }
+  const doOAuth = () => {
+    // navTo(logInEndpoint);
+    window.location.href = "http://localhost:8000/login/"
   }
 
   const doSignUp = async () => {

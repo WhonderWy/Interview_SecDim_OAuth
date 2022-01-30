@@ -18,13 +18,27 @@ import dotenv
 import jwt
 from .models import LoggedInUser
 from .serialisers import LoginSerialiser
+import threading
+import time
 
 AUTHORISE_URL = "https://github.com/login/oauth/authorize"
 ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token"
 USER_API_URL = "https://api.github.com/user/"
+EMAIL_API_URL = "https://api.github.com/user/emails"
 
 session = requests.session()
 state: str = secrets.token_urlsafe()
+
+
+def update_state():
+    global state
+    while True:
+        state = secrets.token_urlsafe()
+        time.sleep(60 * 10)
+
+
+state_update = threading.Thread(target=update_state, daemon=True)
+# state_update.run()
 
 
 def handle_oauth() -> str:
@@ -70,7 +84,21 @@ class LoginAction(views.APIView):
         return []
 
     def get(self, request):
-        return HttpResponse("Test")
+        try:
+            dotenv.read_dotenv()
+            state_update.run()
+            result = ""
+            parameters = {
+                "client_id": os.getenv("SECRET_CLIENT_ID_FOR_NOW"),
+                "redirect_uri": "http://localhost:8000/continue/",
+                # "login": "",
+                "scope": "user",
+                "state": state,
+            }
+            get_response = session.get(AUTHORISE_URL, params=parameters)
+            return HttpResponsePermanentRedirect(get_response.url)
+        except:
+            return HttpResponseBadRequest("Did something wrong.")
 
     def post(self, request):
         result = ""
@@ -111,10 +139,45 @@ class Continue(views.APIView):
         return []
 
     def get(self, request):
-        return HttpResponse("Test")
+        result = "no"
+        token = "no"
+        try:
+            if request.GET["state"] == state:
+                print("it works this time though?")
+            if request.GET["code"]:
+                github_code: str = request.GET["code"]
+                header = {
+                    "Accept": "application/json"
+                }
+                post_body = {
+                    "client_id": os.getenv("SECRET_CLIENT_ID_FOR_NOW"),
+                    "client_secret": os.getenv("SECRET_CLIENT_SECRET"),
+                    "code": github_code,
+                    "redirect_uri": "http://localhost:8000/continue/",
+                }
+                post_response = session.post(ACCESS_TOKEN_URL, data=post_body, headers=header)
+                access_token = post_response.json()["access_token"]
+                print(access_token)
+                header = {
+                    "Authorization": "token %s" % access_token,
+                    "Accept": "application/vnd.github.v3+json",
+                }
+                time.sleep(1)
+                email_response = session.get(USER_API_URL, headers=header)
+                if email_response.ok and email_response.json()["email"]:
+                    result = email_response.json()["email"]
+                else:
+                    time.sleep(1)
+                    email_response = session.get(EMAIL_API_URL, headers=header)
+                    result = email_response.json()
+                token = post_response.json()["access_token"]
+            return JsonResponse({"pointlessToken": token, "emails": result})
+        except:
+            return HttpResponseBadRequest("Did something wrong.")
 
     def post(self, request):
         result = "no"
+        token = "no"
         try:
             if request.data["state"] == state and request.data["code"]:
                 github_code: str = request.data["code"]
@@ -130,11 +193,15 @@ class Continue(views.APIView):
                     "Authorization": "token " + access_token,
                     "Accept": "application/vnd.github.v3+json",
                 }
+                time.sleep(1)
                 email_response = session.get(USER_API_URL, headers=header)
                 if email_response.ok and email_response.json()["email"]:
                     result = email_response.json()["email"]
-                result = post_response.json()["access_token"]
-            return JsonResponse({"pointlessToken": result})
+                else:
+                    email_response = session.get(EMAIL_API_URL, headers=header)
+                    result = email_response.json()
+                token = post_response.json()["access_token"]
+            return JsonResponse({"pointlessToken": token, "emails": result})
         except:
             return HttpResponseBadRequest("Did something wrong.")
 
