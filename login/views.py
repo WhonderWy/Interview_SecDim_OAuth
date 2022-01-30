@@ -37,7 +37,7 @@ def update_state():
         time.sleep(60 * 10)
 
 
-state_update = threading.Thread(target=update_state, daemon=True)
+# state_update = threading.Thread(target=update_state, daemon=True)
 # state_update.run()
 
 
@@ -86,7 +86,7 @@ class LoginAction(views.APIView):
     def get(self, request):
         try:
             dotenv.read_dotenv()
-            state_update.run()
+            # state_update.run()
             result = ""
             parameters = {
                 "client_id": os.getenv("SECRET_CLIENT_ID_FOR_NOW"),
