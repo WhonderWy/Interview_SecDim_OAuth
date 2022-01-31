@@ -103,32 +103,7 @@ class LoginAction(views.APIView):
     def post(self, request):
         result = ""
         try:
-            if request.data["oauth"]:
-                dotenv.read_dotenv()
-                result = ""
-                parameters = {
-                    "client_id": os.getenv("SECRET_CLIENT_ID_FOR_NOW"),
-                    "redirect_uri": "http://localhost:8000/continue/",
-                    # "login": "",
-                    "scope": "user",
-                    "state": state,
-                }
-                get_response = session.get(AUTHORISE_URL, params=parameters)
-                response = HttpResponsePermanentRedirect(get_response.url)
-                # response["Access-Control-Allow-Origin"] = "*"
-                # response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
-                # response["Access-Control-Max-Age"] = "1000"
-                # response["Access-Control-Allow-Headers"] = "X-Requested-With, Content-Type"
-                # response["Access-Control-Allow-Origin"] = "github.com"
-                # response["Access-Control-Allow-Methods"] = "GET"
-                # response["Access-Control-Allow-Headers"] = "github.com"
-                # response["redirect"] = "follow"
-                # response["Referrer-Policy"] = "origin"
-                return response
-            else:
-                email: str = request.data["email"]
-                password: str = request.data["hashed"]
-            return JsonResponse({"pointlessToken": result})
+            raise Exception
         except:
             return HttpResponseBadRequest("Did something wrong.")
 
@@ -157,9 +132,9 @@ class Continue(views.APIView):
                 }
                 post_response = session.post(ACCESS_TOKEN_URL, data=post_body, headers=header)
                 access_token = post_response.json()["access_token"]
-                print(access_token)
+                # print(access_token)
                 header = {
-                    "Authorization": "token %s" % access_token,
+                    "Authorization": f"token {access_token}",
                     "Accept": "application/vnd.github.v3+json",
                 }
                 time.sleep(1)
