@@ -23,7 +23,7 @@ import {
   Route,
   useParams,
 } from "react-router-dom";
-import MainPage, { HandleParams } from "./MainPage";
+import MainPage /*, { HandleParams, Token }*/ from "./MainPage";
 
 const saltAndPepper = bcrypt.genSaltSync(10);
 const logInEndpoint = "login/";
@@ -86,13 +86,16 @@ function App() {
         </h4>
       </div>
       <div className="container">
-        <Router>
+        <MainPage />
+        {/* <Router>
           <Routes>
             <Route path="/" element={<MainPage />}>
+            </Route>
+            <Route path="/token" element={<Token />}>
               <Route path=":pointlessToken" element={<HandleParams />} />
             </Route>
           </Routes>
-        </Router>
+        </Router> */}
       </div>
     </div>
   );

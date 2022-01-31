@@ -10,7 +10,8 @@ import {
 } from "mdb-react-ui-kit";
 import parse from "html-react-parser";
 // import { useParams } from "react-router";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { convertTypeAcquisitionFromJson } from "typescript";
 
 const saltAndPepper = bcrypt.genSaltSync(10);
 const logInEndpoint = "login/";
@@ -24,11 +25,19 @@ const EMAIL_API_URL = "https://api.github.com/user/emails";
 let page = "<></>";
 
 export const MainPage = () => {
-  const [simpleLoggedIn, setLoggedIn] = useState(false);
   const emailRef = useRef("");
   const passwordRef = useRef("");
-  // const navTo = useNavigate();
-  // const [displayEmails, setDisplayEmails] = useState([]);
+  const [showEmail, setShowEmail] = useState(false);
+
+  useEffect(() => {
+    const params = window.location.search;
+    const urlParams = new URLSearchParams(params);
+    const access_token = urlParams.get("pointlessToken");
+    if (access_token) {
+      localStorage.setItem("pointlessToken", access_token);
+      window.location.href = "http://localhost:3000/";
+    }
+  }, []);
 
   const RenderAuth = () => {
     if (page) {
@@ -95,6 +104,7 @@ export const MainPage = () => {
 
   const doLogOut = () => {
     localStorage.clear();
+    window.location.reload();
   };
 
   const getEmails = async () => {
@@ -105,20 +115,16 @@ export const MainPage = () => {
     };
 
     let response;
-    const result: any[] = [];
+    let result: any[] = [];
     try {
       // response = await axios.get(USER_API_URL, { headers: header });
       response = await axios.get(emailEndpoint, {headers: header});
-      if (response.status === 200 && response.data.email) {
-        result.push(response.data.email);
-      } else {
-        response = await axios.get(EMAIL_API_URL, { headers: header });
-        if (response.status === 200 && response.data) {
-          result.concat(response.data);
-        }
+      if (response.status === 200 && response.data.emails) {
+        result = result.concat(response.data.emails);
+        localStorage.setItem("emails", JSON.stringify(result));
       }
-      localStorage.setItem("emails", result.toString());
       // setDisplayEmails(result);
+      setShowEmail(true);
     } catch (error) {
       console.log(error);
       localStorage.clear();
@@ -143,6 +149,7 @@ export const MainPage = () => {
       }
     }
   };
+
   return (
     <>
       <MDBContainer fluid className="text-center">
@@ -151,7 +158,7 @@ export const MainPage = () => {
             <MDBCol>
               <div>
                 <h2>You're in!</h2>
-                <ul>{displayEmails}</ul>
+                <ul>{displayEmails()}</ul>
               </div>
             </MDBCol>
             <MDBCol>
@@ -220,15 +227,33 @@ export const MainPage = () => {
   );
 };
 
-export const HandleParams = () => {
-  let param = useParams();
-  useEffect(() => {
-    console.log(param);
-  }, []);
-  if (param.pointlessToken) {
-    localStorage.setItem("pointlessToken", param.pointlessToken);
-  }
-  return <><p>{param.pointlessToken}</p></>;
-};
+// export const Token = () => {
+//   const param = useParams();
+//   const nav = useNavigate();
+//   console.log(param);
+//   if (param.t) {
+//     localStorage.setItem("pointlessToken", param.t);
+//     nav("/");
+//   }
+//   return (<><p>Test</p><p>{param.t}</p></>);
+// }
+
+// export const HandleParams = () => {
+//   const param = useParams();
+//   const nav = useNavigate();
+//   console.log(param);
+//   if (param.t) {
+//     localStorage.setItem("pointlessToken", param.t);
+//     nav("/");
+//   }
+//   useEffect(() => {
+//     console.log(param);
+//     if (param.t) {
+//       localStorage.setItem("pointlessToken", param.t);
+//       nav("/");
+//     }
+//   }, []);
+//   return (<><p>Test</p><p>{param.t}</p></>);
+// };
 
 export default MainPage;

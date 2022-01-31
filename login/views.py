@@ -233,7 +233,7 @@ class GetEmail(views.APIView):
                 }
                 email_response = session.get(USER_API_URL, headers=header)
                 if email_response.ok and email_response.json()["email"]:
-                    result = email_response.json()["email"]
+                    result = [email_response.json()["email"]]
                 else:
                     time.sleep(1)
                     email_response = session.get(EMAIL_API_URL, headers=header)
