@@ -11,7 +11,6 @@ import {
 import parse from "html-react-parser";
 // import { useParams } from "react-router";
 import { useNavigate, useParams } from "react-router-dom";
-import { convertTypeAcquisitionFromJson } from "typescript";
 
 const saltAndPepper = bcrypt.genSaltSync(10);
 const logInEndpoint = "login/";
@@ -35,7 +34,7 @@ export const MainPage = () => {
     const access_token = urlParams.get("pointlessToken");
     if (access_token) {
       localStorage.setItem("pointlessToken", access_token);
-      window.location.href = "http://localhost:3000/";
+      window.location.href = "/";
     }
   }, []);
 
@@ -147,6 +146,10 @@ export const MainPage = () => {
           }
         });
       }
+    } else {
+      return (<>
+        <li>Nothing here... yet...</li>
+      </>);
     }
   };
 
