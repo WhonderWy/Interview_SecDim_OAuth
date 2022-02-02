@@ -28,12 +28,17 @@ EMAIL_API_URL = "https://api.github.com/user/emails"
 
 session = requests.session()
 state: str = secrets.token_urlsafe()
+jwt_secret: str = secrets.token_hex()
+
+user_github_access_token = None
 
 
 def update_state():
     global state
+    global jwt_secret
     while True:
         state = secrets.token_urlsafe()
+        # jwt_secret: str = secrets.token_hex()
         time.sleep(60 * 10)
 
 
@@ -80,6 +85,21 @@ def handle_oauth() -> list:
                 time.sleep(1)
                 email_response = session.get(EMAIL_API_URL, headers=header)
                 result = email_response.json()
+    return result
+
+def get_email(access_token) -> list:
+    result = []
+    header = {
+        "Authorization": f"token {access_token}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    email_response = session.get(USER_API_URL, headers=header)
+    if email_response.ok and email_response.json()["email"]:
+        result = [email_response.json()["email"]]
+    else:
+        time.sleep(1)
+        email_response = session.get(EMAIL_API_URL, headers=header)
+        result = email_response.json()
     return result
 
 
@@ -140,10 +160,18 @@ class Continue(views.APIView):
                 )
                 access_token = post_response.json()["access_token"]
                 # TODO: Store access token in Database and proceed to grab email. And return a JWT token for the frontend to store and the backend to use as an identifier.
-                # 
-                return HttpResponsePermanentRedirect(
-                    f"http://localhost:8000/?pointlessToken={access_token}"
-                )
+                # CHANGES: Since I don't have the time to make sure the Django's model works just now, I'll store it in a variable.
+                # In original design, I redirected back to frontend so frontend could make the request for email.
+                # return HttpResponsePermanentRedirect(
+                #     f"http://localhost:8000/?pointlessToken={access_token}"
+                # )
+                # But here I'll continue to grab the email data first.
+                global user_github_access_token
+                user_github_access_token = access_token
+                result = get_email(user_github_access_token)
+                # Then store it in the database and proceed to return a JWT I generate.
+                encoded_jwt = jwt.encode({"emails": result}, jwt_secret, algorithm="HS256")
+                return HttpResponsePermanentRedirect(f"http://localhost:8000/?pointlessToken={encoded_jwt}")
             elif request.GET["error"]:
                 return HttpResponseBadRequest(
                     f"""

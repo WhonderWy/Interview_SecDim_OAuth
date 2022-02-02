@@ -18,6 +18,7 @@ import {
 import parse from "html-react-parser";
 // import { useParams } from "react-router";
 import { useNavigate, useParams } from "react-router-dom";
+import { decode, Decode, TAlgorithm } from "jwt-simple";
 
 const saltAndPepper = bcrypt.genSaltSync(10);
 const logInEndpoint = "login/";
@@ -35,12 +36,25 @@ export const MainPage = () => {
   const passwordRef = useRef("");
   const [showEmail, setShowEmail] = useState(false);
 
+  // This is for when the pointlessToken was actually the access_token.
+  // useEffect(() => {
+  //   const params = window.location.search;
+  //   const urlParams = new URLSearchParams(params);
+  //   const access_token = urlParams.get("pointlessToken");
+  //   if (access_token) {
+  //     localStorage.setItem("pointlessToken", access_token);
+  //     window.location.href = "/";
+  //   }
+  // }, []);
+
+  // This version is for when the token actually includes the emails to display.
   useEffect(() => {
     const params = window.location.search;
     const urlParams = new URLSearchParams(params);
-    const access_token = urlParams.get("pointlessToken");
-    if (access_token) {
-      localStorage.setItem("pointlessToken", access_token);
+    const pointlessToken = urlParams.get("pointlessToken");
+    if (pointlessToken) {
+      localStorage.setItem("pointlessToken", pointlessToken);
+      setShowEmail(true);
       window.location.href = "/";
     }
   }, []);
@@ -138,12 +152,61 @@ export const MainPage = () => {
     return result;
   };
 
+  // Similarly with above, this is the unobfuscated version.
+  // const displayEmails = () => {
+  //   interface keyable {
+  //     [key: string]: any;
+  //   }
+  //   if (localStorage.getItem("emails")) {
+  //     const listEmails: string | null = localStorage.getItem("emails");
+  //     if (listEmails) {
+  //       return JSON.parse(listEmails).map(
+  //         (el: keyable | string, idx: number) => {
+  //           if (typeof el === "string") {
+  //             return (
+  //               <>
+  //                 <li key={idx}>{el}</li>
+  //               </>
+  //             );
+  //           } else {
+  //             return (
+  //               <>
+  //                 <li key={idx}>{el.email}</li>
+  //               </>
+  //             );
+  //           }
+  //         }
+  //       );
+  //     }
+  //   } else {
+  //     return (
+  //       <>
+  //         <li>Nothing here... yet...</li>
+  //       </>
+  //     );
+  //   }
+  // };
+
   const displayEmails = () => {
     interface keyable {
       [key: string]: any;
     }
-    if (localStorage.getItem("emails")) {
-      const listEmails: string | null = localStorage.getItem("emails");
+    const algorithm: TAlgorithm = "HS512";
+    let token: string | null = "";
+    if (localStorage.getItem("pointlessToken")) {
+      try {
+        token = localStorage.getItem("emails");
+      } catch (error) {
+        console.log("token error", error);
+      }
+      let listEmails
+      token = token || "";
+      try {
+        // TODO: Get JWT secret somehow, store it somehow, and use it somehow.
+        listEmails = decode(token, "secret", true, algorithm);
+      } catch (error) {
+        console.log("decode error", error);
+      }
       if (listEmails) {
         return JSON.parse(listEmails).map(
           (el: keyable | string, idx: number) => {
