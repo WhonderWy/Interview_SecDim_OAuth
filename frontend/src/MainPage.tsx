@@ -1,4 +1,11 @@
-import { ReactChild, ReactFragment, ReactPortal, useEffect, useRef, useState } from "react";
+import {
+  ReactChild,
+  ReactFragment,
+  ReactPortal,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import bcrypt from "bcryptjs";
 import axios from "axios";
 import {
@@ -117,7 +124,7 @@ export const MainPage = () => {
     let result: any[] = [];
     try {
       // response = await axios.get(USER_API_URL, { headers: header });
-      response = await axios.get(emailEndpoint, {headers: header});
+      response = await axios.get(emailEndpoint, { headers: header });
       if (response.status === 200 && response.data.emails) {
         result = result.concat(response.data.emails);
         localStorage.setItem("emails", JSON.stringify(result));
@@ -133,23 +140,35 @@ export const MainPage = () => {
 
   const displayEmails = () => {
     interface keyable {
-      [key: string]: any  
+      [key: string]: any;
     }
     if (localStorage.getItem("emails")) {
       const listEmails: string | null = localStorage.getItem("emails");
       if (listEmails) {
-        return JSON.parse(listEmails).map((el: keyable | string, idx: number) => {
-          if (typeof el === "string") {
-            return (<><li key={idx}>{el}</li></>);
-          } else {
-            return (<><li key={idx}>{el.email}</li></>);
+        return JSON.parse(listEmails).map(
+          (el: keyable | string, idx: number) => {
+            if (typeof el === "string") {
+              return (
+                <>
+                  <li key={idx}>{el}</li>
+                </>
+              );
+            } else {
+              return (
+                <>
+                  <li key={idx}>{el.email}</li>
+                </>
+              );
+            }
           }
-        });
+        );
       }
     } else {
-      return (<>
-        <li>Nothing here... yet...</li>
-      </>);
+      return (
+        <>
+          <li>Nothing here... yet...</li>
+        </>
+      );
     }
   };
 
@@ -157,18 +176,26 @@ export const MainPage = () => {
     <>
       <MDBContainer fluid className="text-center">
         {(localStorage.getItem("pointlessToken") && (
-          <MDBRow>
-            <MDBCol>
-              <div>
+          <div>
+            <MDBRow>
+              <MDBCol>
                 <h2>You're in!</h2>
+              </MDBCol>
+            </MDBRow>
+            <MDBRow>
+              <MDBCol>
+                <MDBBtn onClick={getEmails}>Get Email(S)!</MDBBtn>
+                <MDBBtn onClick={doLogOut} color="secondary">
+                  Logout
+                </MDBBtn>
+              </MDBCol>
+            </MDBRow>
+            <MDBRow>
+              <MDBCol>
                 <ul>{displayEmails()}</ul>
-              </div>
-            </MDBCol>
-            <MDBCol>
-              <MDBBtn onClick={getEmails}>Get Email!</MDBBtn>
-              <MDBBtn onClick={doLogOut}>Logout</MDBBtn>
-            </MDBCol>
-          </MDBRow>
+              </MDBCol>
+            </MDBRow>
+          </div>
         )) || (
           <MDBRow>
             <MDBCol md="6">

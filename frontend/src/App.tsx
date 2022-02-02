@@ -60,18 +60,18 @@ function App() {
             <div className="collapse navbar-collapse" id="navbarExample01">
               <MDBNavbarNav right className="mb-2 mb-lg-0">
                 <MDBNavbarItem active>
-                  <MDBNavbarLink aria-current="page" href="#">
+                  <MDBNavbarLink aria-current="page" href="/">
                     Home
                   </MDBNavbarLink>
                 </MDBNavbarItem>
                 <MDBNavbarItem>
-                  <MDBNavbarLink href="#">Portfolio</MDBNavbarLink>
+                  <MDBNavbarLink href="#">Portfolio <b>TODO</b></MDBNavbarLink>
                 </MDBNavbarItem>
                 <MDBNavbarItem>
-                  <MDBNavbarLink href="#">Résumé</MDBNavbarLink>
+                  <MDBNavbarLink href="#">Résumé <b>TODO</b></MDBNavbarLink>
                 </MDBNavbarItem>
                 <MDBNavbarItem>
-                  <MDBNavbarLink href="#">About Me</MDBNavbarLink>
+                  <MDBNavbarLink href="#">About Me <b>TODO</b></MDBNavbarLink>
                 </MDBNavbarItem>
               </MDBNavbarNav>
             </div>

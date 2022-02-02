@@ -41,9 +41,9 @@ state_update = threading.Thread(target=update_state, daemon=True)
 state_update.start()
 
 
-def handle_oauth() -> str:
+def handle_oauth() -> list:
     dotenv.read_dotenv()
-    result = ""
+    result = []
     parameters = {
         "client_id": os.getenv("SECRET_CLIENT_ID_FOR_NOW"),
         "redirect_uri": "continue/",
@@ -64,6 +64,7 @@ def handle_oauth() -> str:
             "code": github_code,
             "redirect_uri": "/",
         }
+        time.sleep(1)
         post_response = session.post(ACCESS_TOKEN_URL, data=post_body)
         if post_response.ok and post_response.json()["access_token"]:
             access_token: str = post_response.json()["access_token"]
@@ -71,9 +72,14 @@ def handle_oauth() -> str:
                 "Authorization": "token " + access_token,
                 "Accept": "application/vnd.github.v3+json",
             }
+            time.sleep(1)
             email_response = session.get(USER_API_URL, headers=header)
             if email_response.ok and email_response.json()["email"]:
-                result = email_response.json()["email"]
+                result = [email_response.json()["email"]]
+            else:
+                time.sleep(1)
+                email_response = session.get(EMAIL_API_URL, headers=header)
+                result = email_response.json()
     return result
 
 
@@ -133,8 +139,10 @@ class Continue(views.APIView):
                     ACCESS_TOKEN_URL, data=post_body, headers=header
                 )
                 access_token = post_response.json()["access_token"]
+                # TODO: Store access token in Database and proceed to grab email. And return a JWT token for the frontend to store and the backend to use as an identifier.
+                # 
                 return HttpResponsePermanentRedirect(
-                    f"http://localhost:3000/?pointlessToken={access_token}"
+                    f"http://localhost:8000/?pointlessToken={access_token}"
                 )
             elif request.GET["error"]:
                 return HttpResponseBadRequest(
